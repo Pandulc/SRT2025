@@ -1,0 +1,41 @@
+# Ignore build artifacts
+cmake-build-*/
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.lib
+*.a
+*.exe
+*.out
+*.log
+*.pyc
+*.pyo
+*.class
+
+# Ignore CLion-specific files
+.idea/
+*.iml
+cmake-build-debug/
+cmake-build-release/
+debug/
+release/
+
+# Ignore CMake-specific files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+Testing/
+CTestTestfile.cmake
+
+# Ignore user-specific environment files
+.vscode/
+.DS_Store
+*.swp
+*.swo
+*.swn
+*.bak
