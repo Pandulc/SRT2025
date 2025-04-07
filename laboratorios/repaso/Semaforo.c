@@ -17,7 +17,6 @@ void *boton_cruce(void *arg) {
             boton_presionado = true;
         }
     }
-    return NULL;
 }
 
 void semaforo() {
