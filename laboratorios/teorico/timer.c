@@ -15,19 +15,32 @@
 volatile sig_atomic_t keep_running = 1;
 struct timespec start_time;
 
+// Variables globales para el control de los leds
+unsigned long led1_on_time = 0;
+unsigned long led2_on_time = 0;
+unsigned long led3_on_time = 0;
+const unsigned long led_on_duration = 90;  // en ms
+
+
 // Prototipos de funciones
 void handle_signal(int sig);
 void print_elapsed_time(const char* task_name);
-void task1(void);
-void task2(void);
-void task3(void);
+void task1(unsigned long);
+void task2(unsigned long);
+void task3(unsigned long);
 void init_executive(void);
 double get_elapsed_time(void);
 
 // Manejador de señal para Ctrl+C
 void handle_signal(int sig) {
     keep_running = 0;
+
+    // Apagar LEDs
+    gpioWrite(LED1, 0);
+    gpioWrite(LED2, 0);
+    gpioWrite(LED3, 0);
 }
+
 
 // Obtiene el tiempo transcurrido desde el inicio en segundos
 double get_elapsed_time(void) {
@@ -46,26 +59,24 @@ void print_elapsed_time(const char* task_name) {
 }
 
 // Tareas periódicas
-void task1(void) {
+void task1(unsigned long current_time) {
     print_elapsed_time("Tarea 1 (100 ms)");
     gpioWrite(LED1, 1);
-    usleep(90);
-    gpioWrite(LED1, 0);
+    led1_on_time = current_time;
 }
 
-void task2(void) {
+void task2(unsigned long current_time) {
     print_elapsed_time("Tarea 2 (300 ms)");
     gpioWrite(LED2, 1);
-    usleep(90);
-    gpioWrite(LED2, 0);
+    led2_on_time = current_time;
 }
 
-void task3(void) {
+void task3(unsigned long current_time) {
     print_elapsed_time("Tarea 3 (500 ms)");
     gpioWrite(LED3, 1);
-    usleep(90);
-    gpioWrite(LED3, 0);
+    led3_on_time = current_time;
 }
+
 
 // Inicializa el ejecutivo cíclico
 void init_executive(void) {
@@ -91,34 +102,43 @@ int main(void) {
 
     init_executive();
 
-    // Variables para el control de los períodos
-    unsigned long next_100ms = 0;
-    unsigned long next_300ms = 0;
-    unsigned long next_500ms = 0;
+    unsigned long period_100 = 100;
+    unsigned long period_300 = 300;
+    unsigned long period_500 = 500;
 
-    // Bucle principal del ejecutivo cíclico
+    unsigned long next_100ms = period_100;
+    unsigned long next_300ms = period_300;
+    unsigned long next_500ms = period_500;
+
     while (keep_running) {
-        // Obtener el tiempo actual en milisegundos
         unsigned long current_time = (unsigned long)(get_elapsed_time() * 1000);
 
-        // Ejecutar tarea 1 cada 100 ms
         if (current_time >= next_100ms) {
-            task1();
-            next_100ms = current_time + 100;
+            task1(current_time);
+            next_100ms += period_100;
         }
 
-        // Ejecutar tarea 2 cada 300 ms
         if (current_time >= next_300ms) {
-            task2();
-            next_300ms = current_time + 300;
+            task2(current_time);
+            next_300ms += period_300;
         }
 
-        // Ejecutar tarea 3 cada 500 ms
         if (current_time >= next_500ms) {
-            task3();
-            next_500ms = current_time + 500;
+            task3(current_time);
+            next_500ms += period_500;
         }
+
+        // Apagar LEDs si ya pasaron 90ms desde que se encendieron
+        if (gpioRead(LED1) && current_time - led1_on_time >= led_on_duration)
+            gpioWrite(LED1, 0);
+
+        if (gpioRead(LED2) && current_time - led2_on_time >= led_on_duration)
+            gpioWrite(LED2, 0);
+
+        if (gpioRead(LED3) && current_time - led3_on_time >= led_on_duration)
+            gpioWrite(LED3, 0);
     }
+
 
     printf("\nEjecutivo cíclico terminado.\n");
     return 0;
